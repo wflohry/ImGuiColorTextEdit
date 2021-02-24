@@ -65,6 +65,8 @@ void TextEditor::SetLanguageDefinition(const LanguageDefinition & aLanguageDef)
 
 	for (auto& r : mLanguageDefinition.mTokenRegexStrings)
 		mRegexList.push_back(std::make_pair(std::regex(r.first, std::regex_constants::optimize), r.second));
+	for (auto &f : mLanguageDefinition.mRegexFunctions)
+		mRegexFunctionList.push_back(f);
 
 	Colorize();
 }
@@ -2190,9 +2192,10 @@ void TextEditor::ColorizeRange(int aFromLine, int aToLine)
 				// todo : remove
 				//printf("using regex for %.*s\n", first + 10 < last ? 10 : int(last - first), first);
 
+				bool found = false;
 				for (auto& p : mRegexList)
 				{
-					if (std::regex_search(first, last, results, p.first, std::regex_constants::match_continuous))
+					if (!found && std::regex_search(first, last, results, p.first, std::regex_constants::match_continuous))
 					{
 						hasTokenizeResult = true;
 
@@ -2200,8 +2203,21 @@ void TextEditor::ColorizeRange(int aFromLine, int aToLine)
 						token_begin = v.first;
 						token_end = v.second;
 						token_color = p.second;
+						found = true;
 						break;
 					}
+				}
+				LanguageDefinition::RegexMatch m;
+				for (auto &f : mRegexFunctionList)
+				{
+					if (!found && f.first(first, last, m)){
+						hasTokenizeResult = true;
+						token_begin = m.token_begin;
+						token_end = m.token_end;
+						token_color = f.second;
+						found = true;
+						break;
+				}
 				}
 			}
 

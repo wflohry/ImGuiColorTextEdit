@@ -150,8 +150,14 @@ public:
 
 	struct LanguageDefinition
 	{
+		struct RegexMatch {
+			const char * token_begin = nullptr;
+			const char * token_end = nullptr;
+		};
 		typedef std::pair<std::string, PaletteIndex> TokenRegexString;
 		typedef std::vector<TokenRegexString> TokenRegexStrings;
+		typedef bool (*RegexFunction)(const char *, const char *, RegexMatch&);
+		typedef std::vector<std::pair<RegexFunction, PaletteIndex>> RegexFunctions;
 		typedef bool(*TokenizeCallback)(const char * in_begin, const char * in_end, const char *& out_begin, const char *& out_end, PaletteIndex & paletteIndex);
 
 		std::string mName;
@@ -165,6 +171,7 @@ public:
 		TokenizeCallback mTokenize;
 
 		TokenRegexStrings mTokenRegexStrings;
+		RegexFunctions mRegexFunctions;
 
 		bool mCaseSensitive;
 
@@ -268,6 +275,7 @@ public:
 
 private:
 	typedef std::vector<std::pair<std::regex, PaletteIndex>> RegexList;
+	typedef std::vector<std::pair<TextEditor::LanguageDefinition::RegexFunction, PaletteIndex>> RegexFunctionList;
 
 	struct EditorState
 	{
@@ -376,6 +384,8 @@ private:
 	Palette mPalette;
 	LanguageDefinition mLanguageDefinition;
 	RegexList mRegexList;
+	RegexFunctionList mRegexFunctionList;
+
 
 	bool mCheckComments;
 	Breakpoints mBreakpoints;
